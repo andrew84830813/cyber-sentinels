@@ -42,6 +42,38 @@ These two lines are not decorative. They mark which autonomy class the system be
 
 ---
 
+## Why initiation autonomy matters in security operations
+
+Most AI agents marketed as "autonomous" demonstrate *execution autonomy*: given a goal, the agent acts across multiple steps without asking for confirmation at each one. That is genuinely useful. But it answers only one question — how the agent behaves once it is running. It says nothing about what started it.
+
+In the dominant model today, a human still starts it. Someone notices something in a log review, decides it is worth investigating, and types a prompt. The agent then executes autonomously for as long as needed. The human is not in the loop during execution, but the human was the ignition.
+
+In security operations, that gap between event and human decision is where attackers operate. The PowerShell download cradle in Scenario A takes 6 seconds from `explorer.exe` spawning to `certutil.exe` making an outbound connection. The ransomware staging in Scenario C takes 6 seconds from shadow copy deletion to 349 files renamed. Human-initiated detection cannot operate at that speed — not because analysts are slow, but because the initiation path runs through human attention, and human attention is not a real-time stream processor.
+
+Initiation autonomy removes the human from the ignition path entirely. The environment changes, the sensing layer detects it, the pipeline fires. The clock starts when the threat starts, not when an analyst decides to look. For continuous monitoring, high-volume signal processing, and any domain where the environment changes faster than humans can initiate queries about it, this is a categorical difference — not a speed improvement on the same architecture, but a different architecture.
+
+This demo makes that architecture concrete. The three scenarios that fire the sensor (A, B, C) are designed so the trigger event occurs within the first two seconds of the simulated feed. If this were real monitoring, the analysis pipeline would begin before a human analyst had finished reading the first alert.
+
+---
+
+## What production systems will need to overcome
+
+This demo is honest about what it is: a proof of concept that demonstrates the ignition mechanism, not a production-ready detection system. The architectural argument holds; the gap between this demo and a deployable system is real and worth stating clearly.
+
+**The sensing layer is the hard part, and rules only go so far.** The trigger signatures in `sensor/monitor.py` are hand-crafted patterns that catch known techniques. On a real network, the sensing layer must also surface attack patterns you have not seen before — behavioral anomalies, novel technique variations, and combinations that do not match any known signature. Signature-based detection catches what you already know to look for. The gap between that and "catches what we have not seen yet" is where most real detections are missed.
+
+**False positive economics change at scale.** Each confirmed trigger fires a Haiku triage call followed by a full Sonnet analysis. On a busy endpoint fleet, even a low false positive rate generates significant LLM call volume. The two-step gate (rules → triage LLM → full analysis) helps, but production systems also need signal aggregation, rate limiting on concurrent pipeline invocations, and per-environment threshold tuning. The cost model that works at demo scale requires deliberate engineering at fleet scale.
+
+**The governance model shifts in ways most frameworks do not address.** With human-initiated agents, governance focuses on what the agent can do — tool access, action constraints, uncertainty handling. With environment-initiated agents, governance must also cover what is *allowed to trigger* the agent: who owns the trigger signature list, how changes are reviewed, and what the blast radius is if a misconfigured signature fires continuously. Most existing AI governance frameworks were designed for the human-initiated case and do not reach the initiation layer.
+
+**The sensing layer is an adversarial surface.** An attacker who knows your trigger signatures can craft events to evade them, choose techniques outside the signature set, or flood the pipeline with trigger-matching noise to overwhelm analysis capacity and bury real detections. The sensing layer must be hardened as an independent security boundary, not treated as benign infrastructure.
+
+**Action layer stakes compound all of the above.** In this demo the action is a printed report. In production it might isolate a host, revoke credentials, or trigger an incident response workflow. The cost of a false positive, a missed trigger, or an adversarially crafted signal scales directly with how consequential the downstream action is. Getting the sensing layer right is not optional when the action layer can affect production systems.
+
+These limitations are not arguments against building initiation-autonomous systems. They are the engineering agenda that sits between a working proof of concept and a production deployment. The agent reasoning layer — the part most investment targets — is not where that agenda lives.
+
+---
+
 ## Prerequisites
 
 - Python 3.10+
