@@ -1,0 +1,7 @@
+anthropic
+langchain
+langgraph
+langchain-anthropic
+chromadb
+psutil
+python-dotenv
