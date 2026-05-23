@@ -103,6 +103,8 @@ cp .env.example .env
 
 ## Running the demo
 
+`demo.py` simulates the full autonomous pipeline using pre-built attack event sequences. It runs on any machine without elevated permissions and uses the same agent code as the continuous production mode — only the event source differs.
+
 ```bash
 # All four scenarios in sequence (~45–60 seconds including LLM calls)
 python demo.py
@@ -112,12 +114,28 @@ python demo.py --scenario A   # PowerShell download cradle   → expects HIGH
 python demo.py --scenario B   # Web shell activity            → expects HIGH
 python demo.py --scenario C   # Ransomware staging            → expects CRITICAL
 python demo.py --scenario N   # Normal user activity          → expects BENIGN
-
-# Watch real process events (no LLM, shows trigger detection only)
-python sensor/monitor.py --watch
 ```
 
 Reports are saved to `output/reports/` after each run.
+
+---
+
+## Continuous / production mode
+
+`run_continuous.py` wires the full stack against real processes via psutil. The sensor runs in a `while True` loop, the same trigger logic fires, the same triage LLM gate runs, and the same LangGraph pipeline executes on confirmation. This is the production architecture — `demo.py` simulates it.
+
+```bash
+# Full autonomous pipeline against real processes
+python run_continuous.py
+
+# Sensor and triage only — see what fires without running full Sonnet analysis
+python run_continuous.py --dry-run
+
+# Trigger detection only, no LLM at all
+python sensor/monitor.py --watch
+```
+
+> **Cost warning.** Each confirmed trigger in continuous mode makes two LLM calls: a Haiku triage pass (~$0.0002) and a Sonnet analysis (~$0.01–0.03). On a busy system, trigger signatures can match frequently. **Run `--dry-run` first** to see what would fire before committing to full analysis. Review and tighten `TRIGGER_SIGNATURES` in `sensor/monitor.py` for your environment before running continuously in production.
 
 ---
 
@@ -145,7 +163,7 @@ The always-on layer. Polls process events and evaluates each one against `TRIGGE
 A five-node LangGraph `StateGraph`. Receives the trigger snapshot and full event list from the sensing layer, then runs linearly: log the trigger → format the process tree → analyze with a ReAct agent → classify with structured JSON → generate the final report. Two LLM calls (Claude Sonnet) are made per scenario: analysis and classification.
 
 **Agent** (`agent/agent.py`)
-A `create_react_agent` instance with four tools: `format_process_tree`, `identify_attack_patterns`, `lookup_mitre_technique`, and `get_similar_threats`. Uses `MemorySaver` so all scenarios in a single demo run share session context — the agent can reference earlier detections in its reasoning.
+A `ChatAnthropic`-backed agent built with `langchain.agents.create_agent`, equipped with four tools: `format_process_tree`, `identify_attack_patterns`, `lookup_mitre_technique`, and `get_similar_threats`. Uses `MemorySaver` as its checkpointer so all scenarios in a single session share conversation context — the agent can reference earlier detections in its reasoning.
 
 **Memory** (`memory/store.py`)
 Two-tier persistence. Short-term: `MemorySaver` in the agent checkpointer, scoped to the current session. Long-term: ChromaDB vector store at `output/chroma_db/`, plus a human-readable `output/threat_history.json`. The `get_similar_threats` tool lets the agent do semantic similarity search over all past detections across runs.
@@ -166,9 +184,18 @@ class ThreatState(TypedDict):
 
 Each node reads from the state and returns a partial update. The state accumulates context as it moves through the pipeline.
 
-### Simulated vs. real monitoring
+### Demo vs. continuous: same pipeline, different event source
 
-The demo runs simulated process events so it works on any machine without elevated permissions. The sensing layer is architecturally identical in both modes: the same `is_trigger()` logic and the same callback interface are used regardless of whether events come from `psutil` or a pre-built list.
+`demo.py` and `run_continuous.py` are two entry points to the same agent code. The distinction is only in how events are fed to the sensing layer:
+
+| | `demo.py` | `run_continuous.py` |
+|---|---|---|
+| Event source | Pre-built lists in `simulation/` | Live processes via psutil |
+| Permissions needed | None | Basic (sudo for full cmdline on Linux/Windows) |
+| Runs | Four scenarios, then exits | Continuously until Ctrl+C |
+| LLM cost per run | ~$0.02–0.05 total | Per trigger (see cost warning above) |
+
+Both paths go through identical code: `is_trigger()` → `triage_with_llm()` → `run_scenario()`. The callback signature is the same in both modes — `callback(snapshot, recent_events)` — so the pipeline cannot tell the difference.
 
 The simulation hook is clearly marked in `sensor/monitor.py`:
 
@@ -181,8 +208,6 @@ snapshot = {
     ...
 }
 ```
-
-To switch to real monitoring: `python sensor/monitor.py --watch`
 
 ---
 
@@ -246,7 +271,8 @@ Edit `agent/tools.py` → `lookup_mitre_technique()`, and `agent/prompts.py` →
 
 ```
 cyber-sense/
-├── demo.py                     # entry point — runs all four scenarios
+├── demo.py                     # simulated entry point — four pre-built scenarios
+├── run_continuous.py           # production entry point — full pipeline against real processes
 ├── requirements.txt
 ├── the-ignition-problem-v3.md  # the article this demo accompanies
 ├── SCENARIOS.md                # detailed scenario reference

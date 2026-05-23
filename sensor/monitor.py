@@ -1,26 +1,29 @@
 """
 Process monitor — the ignition layer for cyber-sense.
 
-This file has two modes:
+Two modes, identical callback interface:
 
-  REAL MODE (--watch flag):
-      Uses psutil to poll running processes. Fires the callback when a new
-      process matches a trigger signature. Requires no elevated privileges
-      for basic enumeration; some cmdline/parent info may need higher
-      privileges on Windows.
+  REAL MODE (watch_real / run_continuous.py):
+      Uses psutil to poll running processes continuously. Maintains a rolling
+      buffer of recent process events. When a new process matches a trigger
+      signature, runs LLM triage (Haiku) and — if confirmed — fires:
+          callback(snapshot, recent_events)
+      This is the production path. No human is involved at any stage.
 
-  SIMULATED MODE (inject_simulated_event):
-      Accepts a pre-built process snapshot directly. Used by demo.py to feed
-      attack scenarios into the same callback pipeline that real monitoring
-      uses. The agent layer cannot tell the difference — the callback
-      signature is identical. This is the architectural point: ignition
-      mechanism shape is preserved regardless of whether the trigger is real.
+  SIMULATED MODE (watch_simulated / demo.py):
+      Feeds a pre-built event sequence through the same trigger logic and the
+      same triage call. Fires the same callback signature:
+          callback(snapshot, all_events)
+      The agent pipeline cannot distinguish real from simulated — the snapshot
+      dict and event list have identical structure in both modes.
 
 SIMULATION HOOK points are marked with:  # SIMULATION HOOK
 """
 
 import argparse
 import time
+from collections import deque
+from datetime import datetime
 from typing import Callable, Optional
 
 try:
@@ -117,17 +120,29 @@ def triage_with_llm(snapshot: dict, recent_events: list) -> tuple:
 # Real mode
 # ---------------------------------------------------------------------------
 
-def watch_real(callback: Callable, poll_interval: float = 1.0):
+def watch_real(callback: Callable, poll_interval: float = 1.0, buffer_size: int = 30):
     """
     REAL MODE: Poll running processes with psutil and fire callback on trigger.
 
-    The callback receives the same snapshot dict format used by the simulated
-    mode so the pipeline above is identical in both cases.
+    Maintains a rolling buffer of the last `buffer_size` process events seen.
+    When a trigger signature matches, runs LLM triage (Haiku) before escalating.
+    On confirmation, fires:
+        callback(snapshot, recent_events)
+
+    This is the same two-step gate (rule → triage LLM → pipeline) used by
+    watch_simulated(). The callback signature is identical in both modes so
+    the agent pipeline cannot distinguish real from simulated events.
+
+    NOTE: The rolling buffer captures processes as they are first seen by psutil.
+    On a busy system this window may not include the full attack chain if earlier
+    processes appeared before monitoring started. For richer context, integrate
+    with an OS-level event stream (ETW on Windows, audit on Linux).
     """
     if not PSUTIL_AVAILABLE:
         raise RuntimeError("psutil is not installed. Run: pip install psutil")
 
     seen_pids: set = set()
+    recent_events: deque = deque(maxlen=buffer_size)
     print("[monitor] Watching real processes. Press Ctrl+C to stop.\n")
 
     while True:
@@ -146,6 +161,8 @@ def watch_real(callback: Callable, poll_interval: float = 1.0):
                     parent_name = "unknown"
                     parent_pid = proc.info["ppid"]
 
+                cmdline = proc.info["cmdline"] or []
+
                 snapshot = {
                     "pid": pid,
                     "name": proc.info["name"],
@@ -154,14 +171,31 @@ def watch_real(callback: Callable, poll_interval: float = 1.0):
                     # SIMULATION HOOK: in demo mode, a pre-built cmdline is injected here
                     # instead of reading from the live process. Everything downstream is
                     # identical.
-                    "cmdline": proc.info["cmdline"] or [],
+                    "cmdline": cmdline,
                     "create_time": proc.info["create_time"],
                 }
+
+                # Add every new process to the rolling buffer for pipeline context
+                cmdline_str = " ".join(cmdline) if isinstance(cmdline, list) else cmdline
+                recent_events.append({
+                    "timestamp": datetime.now().strftime("%H:%M:%S"),
+                    "pid": pid,
+                    "name": proc.info["name"],
+                    "parent_pid": parent_pid,
+                    "parent_name": parent_name,
+                    "cmdline": cmdline_str,
+                    "action": "process_start",
+                })
 
                 if is_trigger(snapshot):
                     print(f"[monitor] Trigger: {snapshot['name']} (pid {snapshot['pid']}) "
                           f"<- {snapshot['parent_name']}")
-                    callback(snapshot)
+                    print(f"[monitor] Running LLM triage...")
+                    should_fire, triage_reason = triage_with_llm(snapshot, list(recent_events))
+                    print(f"[monitor] [TRIAGE] {'FIRE' if should_fire else 'SKIP'} — {triage_reason}")
+                    if should_fire:
+                        print(f"[monitor] Environment signal confirmed — initiating pipeline...\n")
+                        callback(snapshot, list(recent_events))
 
             time.sleep(poll_interval)
 
@@ -244,16 +278,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.watch:
-        def on_trigger(snapshot: dict):
+        print("Sensor-only mode: trigger detection without LLM pipeline.")
+        print("To run the full autonomous pipeline against real processes, use:")
+        print("  python run_continuous.py\n")
+
+        def on_trigger(snapshot: dict, recent_events: list):
             cmdline = snapshot.get("cmdline", [])
             if isinstance(cmdline, list):
                 cmdline = " ".join(cmdline)
             print(f"\n  [TRIGGER FIRED]")
             print(f"  Process : {snapshot['name']} (pid {snapshot['pid']})")
             print(f"  Parent  : {snapshot['parent_name']} (pid {snapshot['parent_pid']})")
-            print(f"  Cmdline : {cmdline}\n")
+            print(f"  Cmdline : {cmdline}")
+            print(f"  Context : {len(recent_events)} recent events in buffer\n")
 
         watch_real(on_trigger)
     else:
-        print("Run with --watch to monitor real processes.")
-        print("Import inject_simulated_event to use from demo scripts.")
+        print("Run with --watch to monitor real processes (sensor only, no LLM).")
+        print("Run 'python run_continuous.py' for the full autonomous pipeline.")
