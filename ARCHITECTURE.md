@@ -1,4 +1,4 @@
-# cyber-sentinels Architecture
+# cyber-ignition-agents Architecture
 
 > Architecture reference for the initiation-autonomous cybersecurity agent built to accompany [The Ignition Problem](./the-ignition-problem-v3.md).
 
@@ -10,30 +10,30 @@ All five diagrams render natively in GitHub, VS Code (Mermaid Preview extension)
 
 ## 1. Four-Layer System Architecture
 
-Components and data flows across all four layers. Dashed purple nodes are production-scale extension points scaffolded in `src/cyber_sentinels/sensor/orchestrator.py` and documented in the README.
+Components and data flows across all four layers. Dashed purple nodes are production-scale extension points scaffolded in `src/cyber_ignition_agents/sensor/orchestrator.py` and documented in the README.
 
 ```mermaid
 graph TD
     ENV["Environment: Process Activity Stream<br/>real mode: psutil polling  |  demo mode: simulated events"]
 
-    subgraph L1["Layer 1 — Sensing / Ignition   ·   src/cyber_sentinels/sensor/monitor.py + orchestrator.py"]
+    subgraph L1["Layer 1 — Sensing / Ignition   ·   src/cyber_ignition_agents/sensor/monitor.py + orchestrator.py"]
         C3["Category 3: Rule-Based Sensing<br/>TRIGGER_SIGNATURES → is_trigger()"]
         TRIAGE["LLM Triage Gate<br/>triage_with_llm()  ·  claude-haiku-4-5-20251001"]
         C4["Category 4: Adaptive Orchestrator<br/>OrchestratorSession  ·  claude-haiku-4-5-20251001<br/>adaptive cadence · no pre-specified rules"]
     end
 
-    subgraph L2["Layer 2 — Orchestration   ·   src/cyber_sentinels/agent/graph.py"]
+    subgraph L2["Layer 2 — Orchestration   ·   src/cyber_ignition_agents/agent/graph.py"]
         GRAPH["LangGraph StateGraph<br/>ThreatState  ·  5-node linear pipeline<br/>compiled once, reused across all scenarios"]
     end
 
-    subgraph L3["Layer 3 — Reasoning   ·   src/cyber_sentinels/agent/agent.py + tools.py"]
+    subgraph L3["Layer 3 — Reasoning   ·   src/cyber_ignition_agents/agent/agent.py + tools.py"]
         AGENT["ReAct Agent<br/>claude-sonnet-4-6  ·  MemorySaver checkpointer"]
         TOOLS["4 Analysis Tools<br/>format_process_tree  ·  identify_attack_patterns<br/>lookup_mitre_technique  ·  get_similar_threats"]
     end
 
-    subgraph L4["Layer 4 — Persistence   ·   src/cyber_sentinels/memory/store.py"]
-        CHROMA[(ChromaDB<br/>src/cyber_sentinels/output/chroma_db/)]
-        HIST["threat_history.json<br/>src/cyber_sentinels/output/threat_history.json"]
+    subgraph L4["Layer 4 — Persistence   ·   src/cyber_ignition_agents/memory/store.py"]
+        CHROMA[(ChromaDB<br/>src/cyber_ignition_agents/output/chroma_db/)]
+        HIST["threat_history.json<br/>src/cyber_ignition_agents/output/threat_history.json"]
     end
 
     OUT["Threat Report<br/>output/reports/*.txt  ·  console"]
@@ -226,10 +226,10 @@ The demo runs one sensor and one pipeline on one endpoint. The architecture is d
 graph LR
     subgraph DEMO["Current Demo  (single endpoint)"]
         direction TB
-        D1["Layer 1: Single Sensor<br/>Category 3 or Category 4<br/>src/cyber_sentinels/sensor/monitor.py"]
-        D2["Layer 2: Single Pipeline<br/>LangGraph 5-node linear chain<br/>src/cyber_sentinels/agent/graph.py"]
-        D3["Layer 3: Single ReAct Agent<br/>claude-sonnet-4-6  +  4 tools<br/>src/cyber_sentinels/agent/agent.py"]
-        D4["Layer 4: Local ChromaDB<br/>single-host threat history<br/>src/cyber_sentinels/memory/store.py"]
+        D1["Layer 1: Single Sensor<br/>Category 3 or Category 4<br/>src/cyber_ignition_agents/sensor/monitor.py"]
+        D2["Layer 2: Single Pipeline<br/>LangGraph 5-node linear chain<br/>src/cyber_ignition_agents/agent/graph.py"]
+        D3["Layer 3: Single ReAct Agent<br/>claude-sonnet-4-6  +  4 tools<br/>src/cyber_ignition_agents/agent/agent.py"]
+        D4["Layer 4: Local ChromaDB<br/>single-host threat history<br/>src/cyber_ignition_agents/memory/store.py"]
         D1 --> D2 --> D3
         D3 <--> D4
     end

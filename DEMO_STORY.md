@@ -1,6 +1,6 @@
-# The Demo Story — What cyber-sentinels Does and Why
+# The Demo Story — What cyber-ignition-agents Does and Why
 
-This document tells the full story of the `notebooks/cyber_sentinels_playground.ipynb` demo,
+This document tells the full story of the `notebooks/cyber_ignition_agents_playground.ipynb` demo,
 section by section, in plain language. It is meant to be read before running the notebook
 so you can verify the demo matches your expectations.
 
@@ -54,7 +54,7 @@ file, and confirms the Anthropic API key is present.
 a key-loaded confirmation showing the first 12 characters of your API key.
 
 **Why it matters:** The notebook must run against the editable-installed package
-(`src/cyber_sentinels/`), not any other installed version. The sys.path manipulation
+(`src/cyber_ignition_agents/`), not any other installed version. The sys.path manipulation
 ensures this regardless of which Jupyter kernel is active.
 
 ---

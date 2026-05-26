@@ -1,12 +1,12 @@
 """
-Command-line entry points for cyber-sentinels.
+Command-line entry points for cyber-ignition-agents.
 
 demo_main()    — runs simulated attack scenarios (all four or one specific)
 monitor_main() — runs continuous autonomous monitoring against real processes
 
 Registered as console_scripts in pyproject.toml:
-    cyber-sentinels         → cyber_sentinels.cli:demo_main
-    cyber-sentinels-monitor → cyber_sentinels.cli:monitor_main
+    cyber-ignition-agents         → cyber_ignition_agents.cli:demo_main
+    cyber-ignition-agents-monitor → cyber_ignition_agents.cli:monitor_main
 """
 
 import argparse
@@ -34,8 +34,8 @@ SCENARIOS = {
 
 
 def _get_scenario_fn(key: str):
-    from cyber_sentinels.simulation.malicious import get_scenario_a, get_scenario_b, get_scenario_c
-    from cyber_sentinels.simulation.normal import get_normal_scenario
+    from cyber_ignition_agents.simulation.malicious import get_scenario_a, get_scenario_b, get_scenario_c
+    from cyber_ignition_agents.simulation.normal import get_normal_scenario
     fns = {
         "A": get_scenario_a,
         "B": get_scenario_b,
@@ -61,8 +61,8 @@ def _finish(report: str, scenario_key: str):
 
 
 def _run_one(scenario_key: str, session_id: str = "default", mode: str = "orchestrator"):
-    from cyber_sentinels.sensor.monitor import watch_simulated, watch_with_orchestrator
-    from cyber_sentinels.agent.graph import run_scenario
+    from cyber_ignition_agents.sensor.monitor import watch_simulated, watch_with_orchestrator
+    from cyber_ignition_agents.agent.graph import run_scenario
 
     fn = _get_scenario_fn(scenario_key)
     _, label = SCENARIOS[scenario_key]
@@ -150,7 +150,7 @@ def demo_main():
         print("  export ANTHROPIC_API_KEY=sk-ant-...")
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description="cyber-sentinels autonomous threat detection demo")
+    parser = argparse.ArgumentParser(description="cyber-ignition-agents autonomous threat detection demo")
     parser.add_argument(
         "--scenario",
         choices=list(SCENARIOS.keys()),
@@ -212,11 +212,11 @@ def monitor_main():
         print("Run: pip install psutil")
         sys.exit(1)
 
-    from cyber_sentinels.sensor.monitor import watch_real, TRIGGER_SIGNATURES
-    from cyber_sentinels.agent.graph import run_scenario
+    from cyber_ignition_agents.sensor.monitor import watch_real, TRIGGER_SIGNATURES
+    from cyber_ignition_agents.agent.graph import run_scenario
 
     parser = argparse.ArgumentParser(
-        description="cyber-sentinels continuous autonomous monitoring"
+        description="cyber-ignition-agents continuous autonomous monitoring"
     )
     parser.add_argument(
         "--dry-run",

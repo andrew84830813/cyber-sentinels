@@ -14,26 +14,26 @@ def _check_events(events, name):
 
 
 def test_scenario_a_structure():
-    from cyber_sentinels.simulation.malicious import get_scenario_a
+    from cyber_ignition_agents.simulation.malicious import get_scenario_a
     events, name = get_scenario_a()
     _check_events(events, name)
 
 
 def test_scenario_b_structure():
-    from cyber_sentinels.simulation.malicious import get_scenario_b
+    from cyber_ignition_agents.simulation.malicious import get_scenario_b
     events, name = get_scenario_b()
     _check_events(events, name)
 
 
 def test_scenario_c_structure():
-    from cyber_sentinels.simulation.malicious import get_scenario_c
+    from cyber_ignition_agents.simulation.malicious import get_scenario_c
     events, name = get_scenario_c()
     _check_events(events, name)
 
 
 def test_scenario_n_no_trigger():
-    from cyber_sentinels.simulation.normal import get_normal_scenario
-    from cyber_sentinels.sensor.monitor import is_trigger
+    from cyber_ignition_agents.simulation.normal import get_normal_scenario
+    from cyber_ignition_agents.sensor.monitor import is_trigger
 
     events, _ = get_normal_scenario()
     for e in events:

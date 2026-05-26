@@ -12,8 +12,8 @@ def require_api_key():
 
 
 def test_scenario_a_full_pipeline():
-    from cyber_sentinels.simulation.malicious import get_scenario_a
-    from cyber_sentinels.agent.graph import run_scenario
+    from cyber_ignition_agents.simulation.malicious import get_scenario_a
+    from cyber_ignition_agents.agent.graph import run_scenario
 
     events, name = get_scenario_a()
     # Use the known trigger event (powershell.exe with -EncodedCommand)

@@ -349,7 +349,7 @@ The analysis will note that all parent-child relationships are consistent with n
 
 ## Adding your own scenario
 
-The notebook (`cyber_sentinels_playground.ipynb`, Section 6) provides an interactive environment for defining and running custom scenarios. You can:
+The notebook (`cyber_ignition_agents_playground.ipynb`, Section 6) provides an interactive environment for defining and running custom scenarios. You can:
 
 - Define any process sequence using the event dict schema
 - Add new trigger signatures at runtime (`mon.TRIGGER_SIGNATURES.append(...)`)

@@ -1,6 +1,6 @@
 """Unit tests for is_trigger(). No LLM calls."""
 import pytest
-from cyber_sentinels.sensor.monitor import is_trigger
+from cyber_ignition_agents.sensor.monitor import is_trigger
 
 
 def _snap(name, parent=None, cmdline=""):

@@ -1,6 +1,6 @@
 """Unit tests for orchestrator response parsing. No LLM calls."""
 import pytest
-from cyber_sentinels.sensor.orchestrator import _parse_orchestrator_response
+from cyber_ignition_agents.sensor.orchestrator import _parse_orchestrator_response
 
 
 def test_parse_investigate():

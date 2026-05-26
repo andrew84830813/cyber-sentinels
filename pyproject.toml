@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cyber-sentinels"
-version = "0.3.0"
+name = "cyber-ignition-agents"
+version = "0.4.0"
 description = "Environment-triggered autonomous cybersecurity agent framework — companion demo for The Ignition Problem"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,11 +26,11 @@ dev = [
 ]
 
 [project.scripts]
-cyber-sentinels = "cyber_sentinels.cli:demo_main"
-cyber-sentinels-monitor = "cyber_sentinels.cli:monitor_main"
+cyber-ignition = "cyber_ignition_agents.cli:demo_main"
+cyber-ignition-monitor = "cyber_ignition_agents.cli:monitor_main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cyber_sentinels"]
+packages = ["src/cyber_ignition_agents"]
 
 [tool.pytest.ini_options]
 markers = ["slow: requires ANTHROPIC_API_KEY and makes real LLM calls"]

@@ -1,6 +1,6 @@
 """Unit tests for the generate_report node. No LLM calls — injects state directly."""
 import pytest
-from cyber_sentinels.agent.graph import generate_report, ThreatState
+from cyber_ignition_agents.agent.graph import generate_report, ThreatState
 
 _BASE_STATE: ThreatState = {
     "scenario_name":          "test_scenario",
@@ -27,7 +27,7 @@ def _run(extra=None):
         state.update(extra)
     # Patch save_threat to avoid ChromaDB/filesystem side-effects in unit tests
     import unittest.mock as mock
-    with mock.patch("cyber_sentinels.agent.graph.save_threat"):
+    with mock.patch("cyber_ignition_agents.agent.graph.save_threat"):
         return generate_report(state)["report"]
 
 

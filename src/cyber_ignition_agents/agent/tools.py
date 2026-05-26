@@ -1,5 +1,5 @@
 """
-Tool definitions for the cyber-sentinels ReAct agent.
+Tool definitions for the cyber-ignition-agents ReAct agent.
 
 @tool-decorated functions are callable by the agent during reasoning.
 Plain helpers at the bottom are called directly by graph.py nodes.
