@@ -1,12 +1,12 @@
 """
-Command-line entry points for cyber-sense.
+Command-line entry points for cyber-sentinels.
 
 demo_main()    — runs simulated attack scenarios (all four or one specific)
 monitor_main() — runs continuous autonomous monitoring against real processes
 
 Registered as console_scripts in pyproject.toml:
-    cyber-sense         → cyber_sentinels.cli:demo_main
-    cyber-sense-monitor → cyber_sentinels.cli:monitor_main
+    cyber-sentinels         → cyber_sentinels.cli:demo_main
+    cyber-sentinels-monitor → cyber_sentinels.cli:monitor_main
 """
 
 import argparse
@@ -150,7 +150,7 @@ def demo_main():
         print("  export ANTHROPIC_API_KEY=sk-ant-...")
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description="cyber-sense autonomous threat detection demo")
+    parser = argparse.ArgumentParser(description="cyber-sentinels autonomous threat detection demo")
     parser.add_argument(
         "--scenario",
         choices=list(SCENARIOS.keys()),
@@ -216,7 +216,7 @@ def monitor_main():
     from cyber_sentinels.agent.graph import run_scenario
 
     parser = argparse.ArgumentParser(
-        description="cyber-sense continuous autonomous monitoring"
+        description="cyber-sentinels continuous autonomous monitoring"
     )
     parser.add_argument(
         "--dry-run",

@@ -1,5 +1,5 @@
 """
-Simulated normal/benign process activity for the cyber-sense demo.
+Simulated normal/benign process activity for the cyber-sentinels demo.
 
 Returns (events, name). No trigger signatures match these events, so the sensor
 will not fire. demo.py runs the pipeline directly for the normal scenario to

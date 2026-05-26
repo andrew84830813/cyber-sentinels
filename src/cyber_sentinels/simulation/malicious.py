@@ -1,5 +1,5 @@
 """
-Simulated attack scenarios for the cyber-sense demo.
+Simulated attack scenarios for the cyber-sentinels demo.
 
 Each function returns (events_list, scenario_name).
 The sensor watches the event stream and detects the trigger naturally —

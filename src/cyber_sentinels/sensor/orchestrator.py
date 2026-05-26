@@ -1,5 +1,5 @@
 """
-Adaptive orchestrator — the Category 4 initiation layer for cyber-sense.
+Adaptive orchestrator — the Category 4 initiation layer for cyber-sentinels.
 
 The orchestrator observes batches of process events and decides autonomously:
   - Whether to investigate (INVESTIGATE / CONTINUE)

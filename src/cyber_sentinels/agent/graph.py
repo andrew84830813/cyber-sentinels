@@ -1,5 +1,5 @@
 """
-LangGraph pipeline for cyber-sense threat analysis.
+LangGraph pipeline for cyber-sentinels threat analysis.
 
 Five nodes in a fixed linear chain:
   trigger_received -> monitor_activity -> analyze_sequence -> classify_threat -> generate_report

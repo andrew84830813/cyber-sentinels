@@ -1,5 +1,5 @@
 """
-Process monitor — the ignition layer for cyber-sense.
+Process monitor — the ignition layer for cyber-sentinels.
 
 Three modes, identical callback interface:
 
@@ -370,7 +370,7 @@ def watch_with_orchestrator(
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="cyber-sense process monitor")
+    parser = argparse.ArgumentParser(description="cyber-sentinels process monitor")
     parser.add_argument("--watch", action="store_true", help="Watch real processes with psutil")
     args = parser.parse_args()
 
