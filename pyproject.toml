@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cyber-sense"
-version = "0.2.0"
-description = "Initiation-autonomous cybersecurity agent — companion demo for The Ignition Problem"
+name = "cyber-sentinels"
+version = "0.3.0"
+description = "Environment-triggered autonomous cybersecurity agent framework — companion demo for The Ignition Problem"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -26,11 +26,11 @@ dev = [
 ]
 
 [project.scripts]
-cyber-sense = "cyber_sense.cli:demo_main"
-cyber-sense-monitor = "cyber_sense.cli:monitor_main"
+cyber-sentinels = "cyber_sentinels.cli:demo_main"
+cyber-sentinels-monitor = "cyber_sentinels.cli:monitor_main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cyber_sense"]
+packages = ["src/cyber_sentinels"]
 
 [tool.pytest.ini_options]
 markers = ["slow: requires ANTHROPIC_API_KEY and makes real LLM calls"]

@@ -1,4 +1,4 @@
-# cyber-sense
+# cyber-sentinels
 
 An environment-triggered autonomous cybersecurity agent. It watches a process event stream, detects attack signatures without being asked, fires a LangGraph reasoning pipeline, and produces a structured threat report — start to finish, no human in the loop.
 
@@ -25,12 +25,12 @@ This demo is built to demonstrate the alternative: an agent that is ignited by i
 Environment (process activity)
         │
         ▼
-[Sensing layer]      src/cyber_sense/sensor/monitor.py
+[Sensing layer]      src/cyber_sentinels/sensor/monitor.py
         │            Watches events. Fires on trigger signatures.
         │            No human involved.
         │
         ▼
-[Orchestration]      src/cyber_sense/agent/graph.py
+[Orchestration]      src/cyber_sentinels/agent/graph.py
         │            LangGraph: 5-node pipeline
         │            trigger_received → monitor_activity →
         │            analyze_sequence → classify_threat → generate_report
@@ -94,9 +94,9 @@ These limitations are not arguments against building initiation-autonomous syste
 
 ```bash
 # Clone and enter the project
-cd cyber-sense
+cd cyber-sentinels
 
-# Install in editable mode (creates cyber-sense and cyber-sense-monitor CLI commands)
+# Install in editable mode (creates cyber-sentinels and cyber-sentinels-monitor CLI commands)
 pip install -e ".[dev]"
 
 # Set your API key
@@ -109,8 +109,8 @@ cp .env.example .env
 After `pip install -e ".[dev]"`, two CLI commands are registered:
 
 ```bash
-cyber-sense --scenario A        # same as python demo.py --scenario A
-cyber-sense-monitor --dry-run   # same as python run_continuous.py --dry-run
+cyber-sentinels --scenario A        # same as python demo.py --scenario A
+cyber-sentinels-monitor --dry-run   # same as python run_continuous.py --dry-run
 ```
 
 ---
@@ -127,10 +127,10 @@ python run_continuous.py
 python run_continuous.py --dry-run
 
 # Trigger detection only, no LLM at all
-python -m cyber_sense.sensor.monitor --watch
+python -m cyber_sentinels.sensor.monitor --watch
 ```
 
-> **Cost warning.** Each confirmed trigger in continuous mode makes two LLM calls: a Haiku triage pass (~$0.0002) and a Sonnet analysis (~$0.01–0.03). On a busy system, trigger signatures can match frequently. **Run `--dry-run` first** to see what would fire before committing to full analysis. Review and tighten `TRIGGER_SIGNATURES` in `src/cyber_sense/sensor/monitor.py` for your environment before running continuously in production.
+> **Cost warning.** Each confirmed trigger in continuous mode makes two LLM calls: a Haiku triage pass (~$0.0002) and a Sonnet analysis (~$0.01–0.03). On a busy system, trigger signatures can match frequently. **Run `--dry-run` first** to see what would fire before committing to full analysis. Review and tighten `TRIGGER_SIGNATURES` in `src/cyber_sentinels/sensor/monitor.py` for your environment before running continuously in production.
 
 ---
 
@@ -140,7 +140,7 @@ python -m cyber_sense.sensor.monitor --watch
 
 ```bash
 # All four scenarios in sequence (~45–60 seconds including LLM calls)
-python demo.py                     # or: cyber-sense
+python demo.py                     # or: cyber-sentinels
 
 # Single scenario
 python demo.py --scenario A        # PowerShell download cradle   → expects HIGH
@@ -149,8 +149,8 @@ python demo.py --scenario C        # Ransomware staging            → expects C
 python demo.py --scenario N        # Normal user activity          → expects BENIGN
 
 # Choose sensing mode (default is Category 4 orchestrator)
-cyber-sense --scenario A                       # Category 4 — adaptive orchestrator
-cyber-sense --mode rules --scenario A          # Category 3 — rule-based signatures
+cyber-sentinels --scenario A                       # Category 4 — adaptive orchestrator
+cyber-sentinels --mode rules --scenario A          # Category 3 — rule-based signatures
 ```
 
 Use `--mode rules` to run the original Category 3 path and compare report headers side-by-side. The pipeline output (analysis, classification, recommended actions) is identical in both modes. The difference is the initiation trail: `ORCHESTRATOR DECISION` block vs. `Initiated by: environment signal`.
@@ -176,7 +176,7 @@ See [SCENARIOS.md](./SCENARIOS.md) for the full process sequences, MITRE ATT&CK 
 
 ### Four layers
 
-**Sensing** (`src/cyber_sense/sensor/monitor.py`, `src/cyber_sense/sensor/orchestrator.py`)
+**Sensing** (`src/cyber_sentinels/sensor/monitor.py`, `src/cyber_sentinels/sensor/orchestrator.py`)
 Two modes select the sensing strategy:
 
 *Category 3 (`--mode rules`)*: matches events against `TRIGGER_SIGNATURES` — a hand-authored list of process-name and command-line patterns covering known techniques. When a signature matches, a lightweight Haiku triage pass confirms before escalating. Fast, deterministic, zero per-event cost until a rule fires.
@@ -185,13 +185,13 @@ Two modes select the sensing strategy:
 
 Both modes feed the same LangGraph pipeline downstream. The report header shows which mode initiated the analysis.
 
-**Orchestration** (`src/cyber_sense/agent/graph.py`)
+**Orchestration** (`src/cyber_sentinels/agent/graph.py`)
 A five-node LangGraph `StateGraph`. Receives the trigger snapshot and full event list from the sensing layer, then runs linearly: log the trigger → format the process tree → analyze with a ReAct agent → classify with structured JSON → generate the final report. Two LLM calls (Claude Sonnet) are made per scenario: analysis and classification.
 
-**Agent** (`src/cyber_sense/agent/agent.py`)
+**Agent** (`src/cyber_sentinels/agent/agent.py`)
 A `ChatAnthropic`-backed agent built with `langchain.agents.create_agent`, equipped with four tools: `format_process_tree`, `identify_attack_patterns`, `lookup_mitre_technique`, and `get_similar_threats`. Uses `MemorySaver` as its checkpointer so all scenarios in a single session share conversation context — the agent can reference earlier detections in its reasoning.
 
-**Memory** (`src/cyber_sense/memory/store.py`)
+**Memory** (`src/cyber_sentinels/memory/store.py`)
 Two-tier persistence. Short-term: `MemorySaver` in the agent checkpointer, scoped to the current session. Long-term: ChromaDB vector store at `output/chroma_db/`, plus a human-readable `output/threat_history.json`. The `get_similar_threats` tool lets the agent do semantic similarity search over all past detections across runs.
 
 ### What the pipeline state looks like
@@ -223,7 +223,7 @@ Each node reads from the state and returns a partial update. The state accumulat
 
 Both paths go through identical code: `is_trigger()` → `triage_with_llm()` → `run_scenario()`. The callback signature is the same in both modes — `callback(snapshot, recent_events)` — so the pipeline cannot tell the difference.
 
-The simulation hook is clearly marked in `src/cyber_sense/sensor/monitor.py`:
+The simulation hook is clearly marked in `src/cyber_sentinels/sensor/monitor.py`:
 
 ```python
 snapshot = {
@@ -239,7 +239,7 @@ snapshot = {
 
 ## Interactive exploration
 
-`cyber_sense_playground.ipynb` provides a section-by-section walkthrough:
+`cyber_sentinels_playground.ipynb` provides a section-by-section walkthrough:
 
 1. **Setup** — load scenarios, verify API key
 2. **Browse scenarios** — inspect and edit event sequences
@@ -255,7 +255,7 @@ snapshot = {
 
 ### Add a trigger signature
 
-Edit `src/cyber_sense/sensor/monitor.py`:
+Edit `src/cyber_sentinels/sensor/monitor.py`:
 
 ```python
 TRIGGER_SIGNATURES = [
@@ -268,9 +268,9 @@ Each signature is a dict with any combination of `process`, `parent`, and `cmdli
 
 ### Add a new scenario
 
-1. Add a function to `src/cyber_sense/simulation/malicious.py` (or `src/cyber_sense/simulation/normal.py`) that returns `(events_list, scenario_name)`
+1. Add a function to `src/cyber_sentinels/simulation/malicious.py` (or `src/cyber_sentinels/simulation/normal.py`) that returns `(events_list, scenario_name)`
 2. Add it to `SCENARIOS` in `demo.py`
-3. If the scenario uses a new technique, add it to `TRIGGER_SIGNATURES` in `src/cyber_sense/sensor/monitor.py`
+3. If the scenario uses a new technique, add it to `TRIGGER_SIGNATURES` in `src/cyber_sentinels/sensor/monitor.py`
 
 The event dict schema:
 
@@ -289,21 +289,21 @@ The event dict schema:
 
 ### Add a MITRE technique
 
-Edit `src/cyber_sense/agent/tools.py` → `lookup_mitre_technique()`, and `src/cyber_sense/agent/prompts.py` → `SYSTEM_PROMPT` (the quick reference block).
+Edit `src/cyber_sentinels/agent/tools.py` → `lookup_mitre_technique()`, and `src/cyber_sentinels/agent/prompts.py` → `SYSTEM_PROMPT` (the quick reference block).
 
 ---
 
 ## Project layout
 
 ```
-cyber-sense/
+cyber-sentinels/
 ├── demo.py                          # simulated entry point — four pre-built scenarios
 ├── run_continuous.py                # production entry point — live psutil monitoring
 ├── pyproject.toml                   # package config + CLI entry points
 ├── SCENARIOS.md                     # detailed scenario reference
 │
 ├── src/
-│   └── cyber_sense/
+│   └── cyber_sentinels/
 │       ├── cli.py                   # demo_main() and monitor_main() — wired in pyproject.toml
 │       ├── sensor/
 │       │   ├── monitor.py           # trigger signatures, triage, real + simulated modes
@@ -324,7 +324,7 @@ cyber-sense/
 │   └── integration/                 # full pipeline test (requires ANTHROPIC_API_KEY)
 │
 ├── notebooks/
-│   └── cyber_sense_playground.ipynb # interactive section-by-section walkthrough
+│   └── cyber_sentinels_playground.ipynb # interactive section-by-section walkthrough
 │
 └── output/
     ├── reports/                     # generated threat reports

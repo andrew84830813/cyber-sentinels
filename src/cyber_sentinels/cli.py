@@ -5,8 +5,8 @@ demo_main()    — runs simulated attack scenarios (all four or one specific)
 monitor_main() — runs continuous autonomous monitoring against real processes
 
 Registered as console_scripts in pyproject.toml:
-    cyber-sense         → cyber_sense.cli:demo_main
-    cyber-sense-monitor → cyber_sense.cli:monitor_main
+    cyber-sense         → cyber_sentinels.cli:demo_main
+    cyber-sense-monitor → cyber_sentinels.cli:monitor_main
 """
 
 import argparse
@@ -34,8 +34,8 @@ SCENARIOS = {
 
 
 def _get_scenario_fn(key: str):
-    from cyber_sense.simulation.malicious import get_scenario_a, get_scenario_b, get_scenario_c
-    from cyber_sense.simulation.normal import get_normal_scenario
+    from cyber_sentinels.simulation.malicious import get_scenario_a, get_scenario_b, get_scenario_c
+    from cyber_sentinels.simulation.normal import get_normal_scenario
     fns = {
         "A": get_scenario_a,
         "B": get_scenario_b,
@@ -61,8 +61,8 @@ def _finish(report: str, scenario_key: str):
 
 
 def _run_one(scenario_key: str, session_id: str = "default", mode: str = "orchestrator"):
-    from cyber_sense.sensor.monitor import watch_simulated, watch_with_orchestrator
-    from cyber_sense.agent.graph import run_scenario
+    from cyber_sentinels.sensor.monitor import watch_simulated, watch_with_orchestrator
+    from cyber_sentinels.agent.graph import run_scenario
 
     fn = _get_scenario_fn(scenario_key)
     _, label = SCENARIOS[scenario_key]
@@ -212,8 +212,8 @@ def monitor_main():
         print("Run: pip install psutil")
         sys.exit(1)
 
-    from cyber_sense.sensor.monitor import watch_real, TRIGGER_SIGNATURES
-    from cyber_sense.agent.graph import run_scenario
+    from cyber_sentinels.sensor.monitor import watch_real, TRIGGER_SIGNATURES
+    from cyber_sentinels.agent.graph import run_scenario
 
     parser = argparse.ArgumentParser(
         description="cyber-sense continuous autonomous monitoring"
